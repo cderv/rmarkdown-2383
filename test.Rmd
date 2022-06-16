@@ -1,0 +1,86 @@
+---
+title: "This is a Title"
+subtitle: "An implementation in R Markdown"
+date: "`r Sys.Date()`"
+output:
+  tufte::tufte_html:
+    tufte_features: ["fonts", "background"]
+---
+
+```{r setup, include = FALSE}
+# use Python in R Markdown
+library(tufte)
+library(reticulate)
+# use_python("/usr/bin/python3")
+
+# install.packages("package name")
+# import packages
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggrepel)
+library(showtext)
+font_add("lxgw", "LXGWWenKai-Regular.ttf")
+showtext_auto()
+```
+---
+
+# Python Code
+
+```{python}
+# import libraries
+import pandas as pd
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+
+# load the data
+df = pd.read_csv('moment.csv')
+text = " ".join(key for key in df.keywords.astype(str))
+
+# create the wordcloud
+wordcloud = WordCloud(font_path = "LXGWWenKai-Regular.ttf",
+                      width = 3000,
+                      height = 1500,
+                      max_font_size = 200,
+                      max_words = 400,
+                      background_color = "#fffff8",
+                      collocations = False
+                      ).generate(text)
+
+plt.figure(figsize = (20,10))
+plt.imshow(wordcloud, interpolation = "bilinear")
+
+# show the image
+plt.show(plt.axis("off"), plt.tight_layout(pad = 0))
+```
+
+# R code
+
+```{r}
+data <- read.csv('moment.csv')
+sepdata = separate_rows(data, medium, sep = ", ")
+
+df <-
+  sepdata %>%
+  count(medium) %>%
+  mutate(perc = n / sum(n)) %>%
+  mutate(labels = scales::percent(perc)) %>%
+  arrange(desc(medium)) %>%
+  mutate(text_y = cumsum(n) - n/2)
+
+df %>%
+  ggplot(aes(x = "", y = n, fill = medium)) +
+  geom_col() +
+  geom_label_repel(aes(label = labels, y = text_y),
+                   force = 0.5,
+                   nudge_x = 0.8,
+                   nudge_y = 0.5,
+                   size = 3,
+                   show.legend = FALSE,
+                   family = "lxgw") +
+  coord_polar(theta = "y") +
+  scale_fill_brewer(palette = "Pastel2") +
+  guides(fill = guide_legend(title = NULL)) +
+  theme_void() +
+  theme(text = element_text(family = "lxgw"))
+```
